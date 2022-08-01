@@ -1,3 +1,46 @@
+// エラーあり！！！
+// https://menthas.com/  rss取得
+import { Action, ActionPanel, List, Detail } from "@raycast/api";
+import { useEffect, useState } from "react";
+import { useFetch, Response } from "@raycast/utils";
+import Parser from "rss-parser";
+
+const parser_hatena = new Parser();
+const options = {
+  ignoreAttributes: true,
+};
+interface State {
+  items?: Parser.Item[];
+  error?: Error;
+}
+
+export default function Command() {
+  const [state, setState] = useState<State>({});
+
+  useEffect(() => {
+    async function fetchStories() {
+      let feed = await parser_hatena.parseURL("https://menthas.com/all/rss");
+      setState({ items: feed.items });
+    }
+    fetchStories();
+  }, []);
+  return (
+    <List>
+      {(state.items || []).map((item) => (
+        <List.Item
+          title={item["title"]}
+          actions={
+            <ActionPanel>
+              <Action.OpenInBrowser url={item["link"]} />
+            </ActionPanel>
+          }
+        />
+      ))}
+    </List>
+  );
+}
+//hatena boookmark
+/*
 import { Action, ActionPanel, List, Detail } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { useFetch, Response } from "@raycast/utils";
@@ -39,6 +82,7 @@ export default function Command() {
     </List>
   );
 }
+*/
 
 // yahoo news topics get
 /*
