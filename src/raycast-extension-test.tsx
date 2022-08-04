@@ -1,6 +1,6 @@
 // エラーあり！！！
 // https://menthas.com/  rss取得
-import { Action, ActionPanel, List, Detail } from "@raycast/api";
+import { Action, ActionPanel, List, open } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { useFetch, Response } from "@raycast/utils";
 import Parser from "rss-parser";
@@ -11,6 +11,7 @@ const options = {
 };
 interface State {
   items?: Parser.Item[];
+  items_hatena?: Parser.Item[];
   error?: Error;
 }
 
@@ -20,25 +21,50 @@ export default function Command() {
   useEffect(() => {
     async function fetchStories() {
       let feed = await parser_hatena.parseURL("https://menthas.com/all/rss");
-      setState({ items: feed.items });
+      let feed_hatena = await parser_hatena.parseURL(
+        "https://b.hatena.ne.jp/hotentry/it.rss"
+      );
+      setState({ items: feed.items, items_hatena: feed_hatena.items });
     }
     fetchStories();
   }, []);
+
   return (
     <List>
-      {(state.items || []).map((item) => (
-        <List.Item
-          title={item["title"]}
-          actions={
-            <ActionPanel>
-              <Action.OpenInBrowser url={item["link"]} />
-            </ActionPanel>
-          }
-        />
-      ))}
+      <List.Item
+        title="menthas"
+        actions={
+          <ActionPanel title="menu">
+            <ActionPanel.Submenu title="menthas">
+              {(state.items || []).map((item2) => (
+                <Action
+                  title={item2["title"]}
+                  onAction={() => open(item2["link"])}
+                />
+              ))}
+            </ActionPanel.Submenu>
+          </ActionPanel>
+        }
+      />
+      <List.Item
+        title="hatenabu"
+        actions={
+          <ActionPanel title="menu">
+            <ActionPanel.Submenu title="hatenabu">
+              {(state.items_hatena || []).map((item) => (
+                <Action
+                  title={item["title"]}
+                  onAction={() => open(item["link"])}
+                />
+              ))}
+            </ActionPanel.Submenu>
+          </ActionPanel>
+        }
+      />
     </List>
   );
 }
+
 //hatena boookmark
 /*
 import { Action, ActionPanel, List, Detail } from "@raycast/api";
