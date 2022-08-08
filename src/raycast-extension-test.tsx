@@ -15,11 +15,11 @@ interface State {
   items?: Parser.Item[];
   items_hatena?: Parser.Item[];
   error?: Error;
-  yahoo_json?: any;
-  yahoo_json_ente?: any;
-  yahoo_json_busi?: any;
-  yahoo_json_it?: any;
-  yahoo_json_sci?: any;
+  yahoo_json?: string[] | null;
+  yahoo_json_ente?: string[] | null;
+  yahoo_json_busi?: string[] | null;
+  yahoo_json_it?: string[] | null;
+  yahoo_json_sci?: string[] | null;
 }
 
 export default function Command() {
@@ -27,45 +27,50 @@ export default function Command() {
 
   useEffect(() => {
     async function fetchStories() {
+      
       const options = {
         ignoreAttributes: true,
       };
 
       const parser = new Parser();
-      const feed = await parser.parseURL(
+      const feed: string[] = await parser.parseURL(
         "https://b.hatena.ne.jp/hotentry/it.rss"
       );
       const parser_hatena = new Parser();
-      let feed_hatena = await parser_hatena.parseURL(
+      let feed_hatena: string[] = await parser_hatena.parseURL(
         "https://b.hatena.ne.jp/hotentry/it.rss"
       );
 
       const parser_yahoo = new XMLParser(options);
 
-      const res = await got(
+      const res: string[] = await got(
         "https://news.yahoo.co.jp/rss/topics/top-picks.xml"
       ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
-      const json = parser_yahoo.parse(res.body).rss;
+      const json: string[] = parser_yahoo.parse(res.body).rss;
       // const json = res.body;
 
-      const enta = await got(
+      const enta: string[] = await got(
         "https://news.yahoo.co.jp/rss/topics/entertainment.xml"
       ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
-      const json_enter = parser_yahoo.parse(enta.body).rss;
+      const json_enter: string[] = parser_yahoo.parse(enta.body).rss;
       // const json_enter = enta.body;
 
-      const busi = await got(
+      const busi: string[] = await got(
         "https://news.yahoo.co.jp/rss/topics/business.xml"
       ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
-      const json_busi = parser_yahoo.parse(busi.body).rss;
+      const json_busi: string[] = parser_yahoo.parse(busi.body).rss;
       // const json_busi = busi.body;
 
-      const it = await got("https://news.yahoo.co.jp/rss/topics/it.xml"); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
-      const json_it = parser_yahoo.parse(it.body).rss;
+      const it: string[] = await got(
+        "https://news.yahoo.co.jp/rss/topics/it.xml"
+      ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
+      const json_it: string[] = parser_yahoo.parse(it.body).rss;
       // const json_it = it.body;
 
-      const sci = await got("https://news.yahoo.co.jp/rss/topics/science.xml"); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
-      const json_sci = parser_yahoo.parse(sci.body).rss;
+      const sci: string[] = await got(
+        "https://news.yahoo.co.jp/rss/topics/science.xml"
+      ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
+      const json_sci: string[] = parser_yahoo.parse(sci.body).rss;
       // const json_sci = sci.body;
 
       setState({
@@ -75,8 +80,8 @@ export default function Command() {
         yahoo_json_ente: json_enter.channel.item,
         yahoo_json_busi: json_busi.channel.item,
         yahoo_json_it: json_it.channel.item,
-        yahoo_json_sci: json_sci.channel.item,
       });
+        yahoo_json_sci: json_sci.channel.item,
     }
     fetchStories();
   }, []);
