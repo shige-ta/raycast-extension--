@@ -2,10 +2,9 @@
 // news  rss取得
 import { Action, ActionPanel, List, open } from "@raycast/api";
 import { useEffect, useState } from "react";
-import { useFetch } from "@raycast/utils";
+// import { useFetch } from "@raycast/utils";
 import { XMLParser } from "fast-xml-parser";
 import Parser from "rss-parser";
-import axios, { AxiosError, AxiosResponse } from "axios";
 import got from "got";
 
 const options = {
@@ -15,11 +14,11 @@ interface State {
   items?: Parser.Item[];
   items_hatena?: Parser.Item[];
   error?: Error;
-  yahoo_json?: string[] | null;
-  yahoo_json_ente?: string[] | null;
-  yahoo_json_busi?: string[] | null;
-  yahoo_json_it?: string[] | null;
-  yahoo_json_sci?: string[] | null;
+  yahoo_json?: string[];
+  yahoo_json_ente?: string[];
+  yahoo_json_busi?: string[];
+  yahoo_json_it?: string[];
+  yahoo_json_sci?: string[];
 }
 
 export default function Command() {
@@ -27,7 +26,6 @@ export default function Command() {
 
   useEffect(() => {
     async function fetchStories() {
-      
       const options = {
         ignoreAttributes: true,
       };
@@ -45,33 +43,28 @@ export default function Command() {
 
       const res: string[] = await got(
         "https://news.yahoo.co.jp/rss/topics/top-picks.xml"
-      ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
+      );
       const json: string[] = parser_yahoo.parse(res.body).rss;
-      // const json = res.body;
 
       const enta: string[] = await got(
         "https://news.yahoo.co.jp/rss/topics/entertainment.xml"
-      ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
+      );
       const json_enter: string[] = parser_yahoo.parse(enta.body).rss;
-      // const json_enter = enta.body;
 
       const busi: string[] = await got(
         "https://news.yahoo.co.jp/rss/topics/business.xml"
-      ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
+      );
       const json_busi: string[] = parser_yahoo.parse(busi.body).rss;
-      // const json_busi = busi.body;
 
       const it: string[] = await got(
         "https://news.yahoo.co.jp/rss/topics/it.xml"
-      ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
+      );
       const json_it: string[] = parser_yahoo.parse(it.body).rss;
-      // const json_it = it.body;
 
       const sci: string[] = await got(
         "https://news.yahoo.co.jp/rss/topics/science.xml"
-      ); // レスポンスが返ってこないエラーを再現するため、不正なポートを利用
+      );
       const json_sci: string[] = parser_yahoo.parse(sci.body).rss;
-      // const json_sci = sci.body;
 
       setState({
         items: feed.items,
@@ -80,8 +73,8 @@ export default function Command() {
         yahoo_json_ente: json_enter.channel.item,
         yahoo_json_busi: json_busi.channel.item,
         yahoo_json_it: json_it.channel.item,
-      });
         yahoo_json_sci: json_sci.channel.item,
+      });
     }
     fetchStories();
   }, []);
@@ -93,10 +86,11 @@ export default function Command() {
         actions={
           <ActionPanel title="menu">
             <ActionPanel.Submenu title="menthas">
-              {(state.items || [])?.map((item2) => (
+              {(state.items || [])?.map((item, index) => (
                 <Action
-                  title={item2["title"]}
-                  onAction={() => open(item2["link"])}
+                  key={index}
+                  title={item.title}
+                  onAction={() => open(item.link)}
                 />
               ))}
             </ActionPanel.Submenu>
@@ -108,10 +102,11 @@ export default function Command() {
         actions={
           <ActionPanel title="menu">
             <ActionPanel.Submenu title="hatenabu">
-              {(state.items_hatena || [])?.map((item) => (
+              {(state.items_hatena || [])?.map((item, index) => (
                 <Action
-                  title={item["title"]}
-                  onAction={() => open(item["link"])}
+                  key={index}
+                  title={item.title}
+                  onAction={() => open(item.link)}
                 />
               ))}
             </ActionPanel.Submenu>
@@ -123,10 +118,11 @@ export default function Command() {
         actions={
           <ActionPanel title="menu">
             <ActionPanel.Submenu title="yahoo news">
-              {(state.yahoo_json || [])?.map((item) => (
+              {(state.yahoo_json || [])?.map((item, index) => (
                 <Action
-                  title={item["title"]}
-                  onAction={() => open(item["link"])}
+                  key={index}
+                  title={item.title}
+                  onAction={() => open(item.link)}
                 />
               ))}
             </ActionPanel.Submenu>
@@ -138,10 +134,11 @@ export default function Command() {
         actions={
           <ActionPanel title="menu">
             <ActionPanel.Submenu title="yahoo news(エンタメ)">
-              {(state.yahoo_json_ente || [])?.map((item) => (
+              {(state.yahoo_json_ente || [])?.map((item, index) => (
                 <Action
-                  title={item["title"]}
-                  onAction={() => open(item["link"])}
+                  key={index}
+                  title={item.title}
+                  onAction={() => open(item.link)}
                 />
               ))}
             </ActionPanel.Submenu>
@@ -153,10 +150,11 @@ export default function Command() {
         actions={
           <ActionPanel title="menu">
             <ActionPanel.Submenu title="yahoo news(経済)">
-              {(state.yahoo_json_busi || [])?.map((item) => (
+              {(state.yahoo_json_busi || [])?.map((item, index) => (
                 <Action
-                  title={item["title"]}
-                  onAction={() => open(item["link"])}
+                  key={index}
+                  title={item.title}
+                  onAction={() => open(item.link)}
                 />
               ))}
             </ActionPanel.Submenu>
@@ -168,10 +166,11 @@ export default function Command() {
         actions={
           <ActionPanel title="menu">
             <ActionPanel.Submenu title="yahoo news(IT)">
-              {(state.yahoo_json_it || [])?.map((item) => (
+              {(state.yahoo_json_it || [])?.map((item, index) => (
                 <Action
-                  title={item["title"]}
-                  onAction={() => open(item["link"])}
+                  key={index}
+                  title={item.title}
+                  onAction={() => open(item.link)}
                 />
               ))}
             </ActionPanel.Submenu>
@@ -183,10 +182,11 @@ export default function Command() {
         actions={
           <ActionPanel title="menu">
             <ActionPanel.Submenu title="yahoo news(科学)">
-              {(state.yahoo_json_sci || [])?.map((item) => (
+              {(state.yahoo_json_sci || [])?.map((item, index) => (
                 <Action
-                  title={item["title"]}
-                  onAction={() => open(item["link"])}
+                  key={index}
+                  title={item.title}
+                  onAction={() => open(item.link)}
                 />
               ))}
             </ActionPanel.Submenu>
