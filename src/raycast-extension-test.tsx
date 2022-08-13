@@ -1,7 +1,16 @@
 // エラーあり！！！
 // news  rss取得
-import { Action, ActionPanel, List, open } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  List,
+  open,
+  Icon,
+  useNavigation,
+  Form,
+} from "@raycast/api";
 import { useEffect, useState } from "react";
+import React, { useContext } from "react";
 // import { useFetch } from "@raycast/utils";
 import { XMLParser } from "fast-xml-parser";
 import Parser from "rss-parser";
@@ -15,65 +24,48 @@ interface State {
   items_hatena?: Parser.Item[];
   error?: Error;
   yahoo_json?: string[];
-  yahoo_json_ente?: string[];
-  yahoo_json_busi?: string[];
-  yahoo_json_it?: string[];
-  yahoo_json_sci?: string[];
+  add_news_list?: string[];
 }
 
-export default function Command() {
-  const [state, setState] = useState<State>({});
+let url_list = [
+  ["https://news.yahoo.co.jp/rss/topics/top-picks.xml", "top picks"],
+  ["https://news.yahoo.co.jp/rss/topics/science.xml", "yahoo science"],
+  [
+    "https://news.yahoo.co.jp/rss/topics/entertainment.xml",
+    "yahoo entertainment",
+  ],
+  ["https://news.yahoo.co.jp/rss/topics/it.xml", "yahoo it"],
+  ["https://news.yahoo.co.jp/rss/topics/business.xml", "yahoo business"],
+  ["https://b.hatena.ne.jp/hotentry/it.rss", "hatebu it"],
+  ["https://menthas.com/all/rss", "menthas"],
+];
+
+let list_url = React.createContext(url_list);
+
+function News(p) {
+  const { list, setList } = useState;
+  console.log(props.url_list);
 
   useEffect(() => {
     async function fetchStories() {
-      const options = {
+      const opt: any = {
         ignoreAttributes: true,
       };
+      const parser_yahoo = new XMLParser(opt);
 
-      const parser = new Parser();
-      const feed: string[] = await parser.parseURL(
-        "https://b.hatena.ne.jp/hotentry/it.rss"
-      );
-      const parser_hatena = new Parser();
-      let feed_hatena: string[] = await parser_hatena.parseURL(
-        "https://b.hatena.ne.jp/hotentry/it.rss"
-      );
-
-      const parser_yahoo = new XMLParser(options);
-
-      const res: string[] = await got(
-        "https://news.yahoo.co.jp/rss/topics/top-picks.xml"
-      );
-      const json: string[] = parser_yahoo.parse(res.body).rss;
-
-      const enta: string[] = await got(
-        "https://news.yahoo.co.jp/rss/topics/entertainment.xml"
-      );
-      const json_enter: string[] = parser_yahoo.parse(enta.body).rss;
-
-      const busi: string[] = await got(
-        "https://news.yahoo.co.jp/rss/topics/business.xml"
-      );
-      const json_busi: string[] = parser_yahoo.parse(busi.body).rss;
-
-      const it: string[] = await got(
-        "https://news.yahoo.co.jp/rss/topics/it.xml"
-      );
-      const json_it: string[] = parser_yahoo.parse(it.body).rss;
-
-      const sci: string[] = await got(
-        "https://news.yahoo.co.jp/rss/topics/science.xml"
-      );
-      const json_sci: string[] = parser_yahoo.parse(sci.body).rss;
+      const r: any = await got(p.props);
+      let items: string[] = [];
+      let json: string[] = parser_yahoo.parse(r.body).rss;
+      if (json === undefined) {
+        const parser = new Parser();
+        json = await parser.parseURL(p.props);
+        items = json.items;
+      } else {
+        items = json.channel.item;
+      }
 
       setState({
-        items: feed.items,
-        items_hatena: feed_hatena.items,
-        yahoo_json: json.channel.item,
-        yahoo_json_ente: json_enter.channel.item,
-        yahoo_json_busi: json_busi.channel.item,
-        yahoo_json_it: json_it.channel.item,
-        yahoo_json_sci: json_sci.channel.item,
+        news_json: items,
       });
     }
     fetchStories();
@@ -81,115 +73,101 @@ export default function Command() {
 
   return (
     <List>
+      {(state.news_json || [])?.map((item, index) => (
+        <List.Item
+          key={index}
+          title={item.title}
+          onAction={() => open(item.link)}
+        />
+      ))}
+    </List>
+  );
+}
+
+function Add(props) {
+  let l_url2 = useContext(list_url);
+  console.log(l_url2);
+  const { name, setName } = useState<string>();
+  const [list, setList] = useState([]);
+  let copyList = [...list];
+  async function url_check(url) {
+    console.log(url);
+    const opt: any = {
+      ignoreAttributes: true,
+    };
+    const parser_yahoo = new XMLParser(opt);
+
+    try {
+      const r: any = await got(url);
+      let items: string[] = [];
+      let json: string[] = parser_yahoo.parse(r.body).rss;
+      if (json === undefined) {
+        const parser
+        
+         = new Parser();
+        json = await parser.parseURL(url);
+        items = json.items;
+      } else {
+        items = json.channel.item;
+      }
+      if (items != undefined) {
+        // copyList.push(url);
+        // console.log(copyList);
+        // console.log("URL追加");
+        l_url.push(url);
+      }
+    } catch (e) {
+      console.log("URL無効");
+      // props.setList(copyList);
+    }
+  }
+  return (
+    <Form
+      actions={
+        <ActionPanel>
+          <Action.SubmitForm
+            title="RSS追加"
+            onSubmit={(values) => url_check(values.name)}
+          />
+        </ActionPanel>
+      }
+    >
+      <Form.TextField id="name" value={name} />
+    </Form>
+  );
+}
+
+export default function Command() {
+  let l_url = useContext(list_url);
+  console.log(l_url);
+  const [state, setState] = useState<State>({});
+  const { push } = useNavigation();
+
+  return (
+    <List>
+      {(l_url || []).map((item, index) => (
+        <List.Item
+          key={index}
+          title={item[1]}
+          actions={
+            <ActionPanel>
+              <ActionPanel.Item
+                title="Push"
+                onAction={() => push(<News props={item[0]} />)}
+              />
+            </ActionPanel>
+          }
+        />
+      ))}
       <List.Item
-        title="menthas"
+        title="rss add (工事中)"
+        icon={Icon.Plus}
         actions={
-          <ActionPanel title="menu">
-            <ActionPanel.Submenu title="menthas">
-              {(state.items || [])?.map((item, index) => (
-                <Action
-                  key={index}
-                  title={item.title}
-                  onAction={() => open(item.link)}
-                />
-              ))}
-            </ActionPanel.Submenu>
-          </ActionPanel>
-        }
-      />
-      <List.Item
-        title="hatenabu"
-        actions={
-          <ActionPanel title="menu">
-            <ActionPanel.Submenu title="hatenabu">
-              {(state.items_hatena || [])?.map((item, index) => (
-                <Action
-                  key={index}
-                  title={item.title}
-                  onAction={() => open(item.link)}
-                />
-              ))}
-            </ActionPanel.Submenu>
-          </ActionPanel>
-        }
-      />
-      <List.Item
-        title="yahoo news"
-        actions={
-          <ActionPanel title="menu">
-            <ActionPanel.Submenu title="yahoo news">
-              {(state.yahoo_json || [])?.map((item, index) => (
-                <Action
-                  key={index}
-                  title={item.title}
-                  onAction={() => open(item.link)}
-                />
-              ))}
-            </ActionPanel.Submenu>
-          </ActionPanel>
-        }
-      />
-      <List.Item
-        title="yahoo news(エンタメ)"
-        actions={
-          <ActionPanel title="menu">
-            <ActionPanel.Submenu title="yahoo news(エンタメ)">
-              {(state.yahoo_json_ente || [])?.map((item, index) => (
-                <Action
-                  key={index}
-                  title={item.title}
-                  onAction={() => open(item.link)}
-                />
-              ))}
-            </ActionPanel.Submenu>
-          </ActionPanel>
-        }
-      />
-      <List.Item
-        title="yahoo news(経済)"
-        actions={
-          <ActionPanel title="menu">
-            <ActionPanel.Submenu title="yahoo news(経済)">
-              {(state.yahoo_json_busi || [])?.map((item, index) => (
-                <Action
-                  key={index}
-                  title={item.title}
-                  onAction={() => open(item.link)}
-                />
-              ))}
-            </ActionPanel.Submenu>
-          </ActionPanel>
-        }
-      />
-      <List.Item
-        title="yahoo news(IT)"
-        actions={
-          <ActionPanel title="menu">
-            <ActionPanel.Submenu title="yahoo news(IT)">
-              {(state.yahoo_json_it || [])?.map((item, index) => (
-                <Action
-                  key={index}
-                  title={item.title}
-                  onAction={() => open(item.link)}
-                />
-              ))}
-            </ActionPanel.Submenu>
-          </ActionPanel>
-        }
-      />
-      <List.Item
-        title="yahoo news(科学)"
-        actions={
-          <ActionPanel title="menu">
-            <ActionPanel.Submenu title="yahoo news(科学)">
-              {(state.yahoo_json_sci || [])?.map((item, index) => (
-                <Action
-                  key={index}
-                  title={item.title}
-                  onAction={() => open(item.link)}
-                />
-              ))}
-            </ActionPanel.Submenu>
+          <ActionPanel>
+            <ActionPanel.Item
+              title="Push"
+              onAction={() => push(<Add props={(state, setState)} />)}
+            />
           </ActionPanel>
         }
       />
